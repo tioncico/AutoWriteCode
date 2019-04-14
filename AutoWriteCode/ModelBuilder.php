@@ -82,8 +82,10 @@ class ModelBuilder
         $phpClass = $this->addClassBaseContent($tableName, $realTableName, $phpNamespace, $tableComment, $tableColumns);
         //配置getAll
         $this->addGetAllMethod($phpClass);
-        $this->addGetOneMethod($phpClass,$tableName,$tableColumns);
-
+        $this->addGetOneMethod($phpClass, $tableName, $tableColumns);
+        $this->addAddMethod($phpClass, $tableName, $tableColumns);
+        $this->addDeleteMethod($phpClass, $tableName, $tableColumns);
+        $this->addUpdateMethod($phpClass, $tableName, $tableColumns);
 
         return $this->createPHPDocument($this->basePath . '/' . $realTableName, $phpNamespace, $tableColumns);
     }
@@ -121,33 +123,103 @@ class ModelBuilder
         return $phpClass;
     }
 
-    protected function addGetOneMethod(ClassType $phpClass,$tableName,$tableColumns){
+    protected function addUpdateMethod(ClassType $phpClass, $tableName, $tableColumns)
+    {
+        $method = $phpClass->addMethod('update');
+        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))) . 'Bean';
+        $namespaceBeanName = $this->baseNamespace . '\\' . $beanName;
+        //配置基础注释
+        $method->addComment("默认根据主键({$this->primaryKey})进行更新");
+        $method->addComment("@delete");
+        $method->addComment("@param  {$beanName} \$bean");//默认为使用Bean注释
+        $method->addComment("@param  array \$data");
+
+        //配置返回类型
+        $method->setReturnType('bool');
+        //配置参数为bean
+        $method->addParameter('bean')->setTypeHint($namespaceBeanName);
+        $method->addParameter('data')->setTypeHint('array');
+        $getPrimaryKeyMethodName = "get" . Str::studly($this->primaryKey);
+
+        $methodBody = <<<Body
+if (empty(\$data)){
+    return false;
+}
+return \$this->getDbConnection()->where(\$this->primaryKey, \$bean->$getPrimaryKeyMethodName())->update(\$this->table, \$data);
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@return bool");
+    }
+
+    protected function addDeleteMethod(ClassType $phpClass, $tableName, $tableColumns)
+    {
+        $method = $phpClass->addMethod('delete');
+        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))) . 'Bean';
+        $namespaceBeanName = $this->baseNamespace . '\\' . $beanName;
+        //配置基础注释
+        $method->addComment("默认根据主键({$this->primaryKey})进行删除");
+        $method->addComment("@delete");
+        $method->addComment("@param  {$beanName} \$bean");//默认为使用Bean注释
+
+        //配置返回类型
+        $method->setReturnType('bool');
+        //配置参数为bean
+        $method->addParameter('bean')->setTypeHint($namespaceBeanName);
+        $getPrimaryKeyMethodName = "get" . Str::studly($this->primaryKey);
+
+        $methodBody = <<<Body
+return  \$this->getDbConnection()->where(\$this->primaryKey, \$bean->$getPrimaryKeyMethodName())->delete(\$this->table);
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@return bool");
+    }
+
+    protected function addAddMethod(ClassType $phpClass, $tableName, $tableColumns)
+    {
+        $method = $phpClass->addMethod('add');
+        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))) . 'Bean';
+        $namespaceBeanName = $this->baseNamespace . '\\' . $beanName;
+        //配置基础注释
+        $method->addComment("默认根据bean数据进行插入数据");
+        $method->addComment("@add");
+        $method->addComment("@param  {$beanName} \$bean");//默认为使用Bean注释
+        //配置参数为bean
+        $method->addParameter('bean')->setTypeHint($namespaceBeanName);
+        //配置返回类型
+        $method->setReturnType('bool');
+
+        $methodBody = <<<Body
+return \$this->getDbConnection()->insert(\$this->table, \$bean->toArray(null, \$bean::FILTER_NOT_NULL));
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@return bool");
+    }
+
+    protected function addGetOneMethod(ClassType $phpClass, $tableName, $tableColumns)
+    {
         $method = $phpClass->addMethod('getOne');
-        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))).'Bean';
-        $beanName = $this->baseNamespace.'\\'.$beanName;
+        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))) . 'Bean';
+        $namespaceBeanName = $this->baseNamespace . '\\' . $beanName;
         //配置基础注释
         $method->addComment("默认根据主键({$this->primaryKey})进行搜索");
         $method->addComment("@getOne");
-        $method->addComment("@param  {$beanName}" );//默认为使用Bean注释
+        $method->addComment("@param  {$beanName} \$bean");//默认为使用Bean注释
 
         //配置返回类型
-        $method->setReturnType($beanName)->setReturnNullable();
+        $method->setReturnType($namespaceBeanName)->setReturnNullable();
         //配置参数为bean
-        $method->addParameter('bean')->setTypeHint($beanName);
+        $method->addParameter('bean')->setTypeHint($namespaceBeanName);
+        $getPrimaryKeyMethodName = "get" . Str::studly($this->primaryKey);
 
-        /*
-         * 以customerCaseId进行获取
-         */
-//        function getOne(CustomerCaseBean $customerCaseBean):?CustomerCaseBean
-//        {
-//            $customerCase = $this->getDbConnection()->where($this->primaryKey, $customerCaseBean->getCustomerCaseId())->getOne($this->table);
-//            if (empty($customerCase)) {
-//                return null;
-//            }
-//            return new CustomerCaseBean($customerCase);
-//        }
-
-
+        $methodBody = <<<Body
+\$info = \$this->getDbConnection()->where(\$this->primaryKey, \$bean->$getPrimaryKeyMethodName())->getOne(\$this->table);
+if (empty(\$info)) {
+    return null;
+}
+return new $beanName(\$info);
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@return $beanName");
     }
 
     protected function addGetAllMethod(ClassType $phpClass, $keyword = '')

@@ -79,7 +79,6 @@ class BeanBuilder
             $name = $column['Field'];
             $comment = $column['Comment'];
             $columnType = $this->convertDbTypeToDocType($column['Type']);
-            var_dump($columnType);
             $phpClass->addComment("@property {$columnType} {$name} | {$comment}");
             $phpClass->addProperty($column['Field']);
             $phpClass->addMethod("set" . Str::studly($column['Field']));
