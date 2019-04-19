@@ -9,7 +9,6 @@
 namespace AutoWriteCode;
 
 use EasySwoole\Utility\Str;
-use http\Message\Body;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 
@@ -300,51 +299,16 @@ Body;
     protected function createPHPDocument($fileName, $fileContent, $tableColumns)
     {
 //        var_dump($fileName.'.php');
-//        if (file_exists($fileName.'.php')){
-//            echo "当前路径已经存在文件,是否覆盖?(y/n)\n";
-//            if (trim(fgets(STDIN))=='n'){
-//                echo "已结束运行";
-//                return false;
-//            }
-//        }
-        $fileContent = $this->publicPropertyToProtected($fileContent, $tableColumns);
-        $fileContent = $this->addGetMethodContent($fileContent, $tableColumns);
+        if (file_exists($fileName . '.php')) {
+            echo "当前路径已经存在文件,是否覆盖?(y/n)\n";
+            if (trim(fgets(STDIN)) == 'n') {
+                echo "已结束运行";
+                return false;
+            }
+        }
         $content = "<?php\n\n{$fileContent}\n";
-        return file_put_contents($fileName . '.php', $content);
-    }
-
-    /**
-     * publicPropertyToProtected
-     * @param $fileContent
-     * @param $tableColumns
-     * @return mixed
-     * @author Tioncico
-     * Time: 19:50
-     */
-    protected function publicPropertyToProtected($fileContent, $tableColumns)
-    {
-        foreach ($tableColumns as $column) {
-            $fileContent = str_replace("public $" . $column['Field'] . ";", "protected $" . $column['Field'] . ";", $fileContent);
-        }
-        return $fileContent;
-    }
-
-    /**
-     * addGetMethodContent
-     * @param $fileContent
-     * @param $tableColumns
-     * @return string|string[]|null
-     * @author Tioncico
-     * Time: 19:50
-     */
-    protected function addGetMethodContent($fileContent, $tableColumns)
-    {
-        foreach ($tableColumns as $column) {
-            $pattern = '/(public\\s+function\\s+set' . Str::studly($column['Field']) . ')\(\)\\s+({)(\\s*)(})/';
-            $fileContent = preg_replace($pattern, '$1($' . Str::camel($column['Field']) . ')$2$this->' . $column['Field'] . '=$' . Str::camel($column['Field']) . ';$4', $fileContent);
-            $pattern = '/(public\\s+function\\s+get' . Str::studly($column['Field']) . ')\(\)\\s+({)(\\s*)(})/';
-            $fileContent = preg_replace($pattern, '$1()$2 return $this->' . $column['Field'] . ';$4', $fileContent);
-        }
-        return $fileContent;
+//        var_dump($content);
+        $result = file_put_contents($fileName . '.php', $content);
+        return $result == false ? $result : $fileName . '.php';
     }
 }

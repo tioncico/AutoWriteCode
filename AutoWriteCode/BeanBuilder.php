@@ -9,6 +9,7 @@
 namespace AutoWriteCode;
 
 use EasySwoole\Utility\Str;
+use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 
 /**
@@ -81,11 +82,34 @@ class BeanBuilder
             $columnType = $this->convertDbTypeToDocType($column['Type']);
             $phpClass->addComment("@property {$columnType} {$name} | {$comment}");
             $phpClass->addProperty($column['Field']);
-            $phpClass->addMethod("set" . Str::studly($column['Field']));
-            $phpClass->addMethod("get" . Str::studly($column['Field']));
+            $this->addSetMethod($phpClass, $column['Field']);
+            $this->addGetMethod($phpClass, $column['Field']);
         }
         return $this->createPHPDocument($this->basePath . '/' . $realTableName, $phpNamespace, $tableColumns);
     }
+
+    function addSetMethod(ClassType $phpClass, $column)
+    {
+        $method = $phpClass->addMethod("set" . Str::studly($column));
+        $method->addParameter($column);
+        $methodBody = <<<Body
+\$this->$column = \$$column;
+Body;
+        //配置方法内容
+        $method->setBody($methodBody);
+    }
+
+
+    function addGetMethod(ClassType $phpClass, $column)
+    {
+        $method = $phpClass->addMethod("get" . Str::studly($column));
+        $methodBody = <<<Body
+return \$this->$column;
+Body;
+        //配置方法内容
+        $method->setBody($methodBody);
+    }
+
 
     /**
      * convertDbTypeToDocType
@@ -121,52 +145,17 @@ class BeanBuilder
      */
     protected function createPHPDocument($fileName, $fileContent, $tableColumns)
     {
-        var_dump($fileName.'.php');
-        if (file_exists($fileName.'.php')){
+        if (file_exists($fileName . '.php')) {
             echo "当前路径已经存在文件,是否覆盖?(y/n)\n";
-            if (trim(fgets(STDIN))=='n'){
+            if (trim(fgets(STDIN)) == 'n') {
                 echo "已结束运行";
                 return false;
             }
         }
-        $fileContent = $this->publicPropertyToProtected($fileContent, $tableColumns);
-        $fileContent = $this->addGetMethodContent($fileContent, $tableColumns);
         $content = "<?php\n\n{$fileContent}\n";
-        return file_put_contents($fileName . '.php', $content);
+        $result = file_put_contents($fileName . '.php', $content);
+
+        return $result == false ? $result : $fileName . '.php';
     }
 
-    /**
-     * publicPropertyToProtected
-     * @param $fileContent
-     * @param $tableColumns
-     * @return mixed
-     * @author Tioncico
-     * Time: 19:50
-     */
-    protected function publicPropertyToProtected($fileContent, $tableColumns)
-    {
-        foreach ($tableColumns as $column) {
-            $fileContent = str_replace("public $" . $column['Field'] . ";", "protected $" . $column['Field'] . ";", $fileContent);
-        }
-        return $fileContent;
-    }
-
-    /**
-     * addGetMethodContent
-     * @param $fileContent
-     * @param $tableColumns
-     * @return string|string[]|null
-     * @author Tioncico
-     * Time: 19:50
-     */
-    protected function addGetMethodContent($fileContent, $tableColumns)
-    {
-        foreach ($tableColumns as $column) {
-            $pattern = '/(public\\s+function\\s+set' . Str::studly($column['Field']) . ')\(\)\\s+({)(\\s*)(})/';
-            $fileContent = preg_replace($pattern, '$1($' . Str::camel($column['Field']) . ')$2$this->' . $column['Field'] . '=$' . Str::camel($column['Field']) . ';$4', $fileContent);
-            $pattern = '/(public\\s+function\\s+get' . Str::studly($column['Field']) . ')\(\)\\s+({)(\\s*)(})/';
-            $fileContent = preg_replace($pattern, '$1()$2 return $this->' . $column['Field'] . ';$4', $fileContent);
-        }
-        return $fileContent;
-    }
 }
