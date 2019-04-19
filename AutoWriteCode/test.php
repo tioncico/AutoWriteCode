@@ -9,6 +9,8 @@ include "../vendor/autoload.php";
 defined('EASYSWOOLE_ROOT') or define('EASYSWOOLE_ROOT', dirname(__FILE__, 2));
 require_once EASYSWOOLE_ROOT . '/EasySwooleEvent.php';
 \EasySwoole\EasySwoole\Core::getInstance()->initialize();
+go(function ()  {
 
-$automatic = new \AutoWriteCode\TableAutomatic('test','');
-$automatic->action();
+    $automatic = new \AutoWriteCode\TableAutomatic('test', '');
+    $automatic->action();
+});

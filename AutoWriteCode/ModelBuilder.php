@@ -33,7 +33,7 @@ class ModelBuilder
      * @param string $tablePre
      * @throws \Exception
      */
-    public function __construct($baseDirectory, $baseNamespace, $extendClass, $tablePre = '')
+    public function __construct($baseDirectory, $baseNamespace, $extendClass = null, $tablePre = '')
     {
         $this->basePath = $baseDirectory;
         $this->createBaseDirectory($baseDirectory);
@@ -104,7 +104,9 @@ class ModelBuilder
     {
         $phpClass = $phpNamespace->addClass($realTableName);
         //配置类基本信息
-        $phpClass->addExtend($this->extendClass);
+        if ($this->extendClass) {
+            $phpClass->addExtend($this->extendClass);
+        }
         $phpClass->addComment("{$tableComment}");
         $phpClass->addComment("Class {$realTableName}");
         $phpClass->addComment('Create With Automatic Generator');
@@ -300,7 +302,7 @@ Body;
     {
 //        var_dump($fileName.'.php');
         if (file_exists($fileName . '.php')) {
-            echo "当前路径已经存在文件,是否覆盖?(y/n)\n";
+            echo "(Model)当前路径已经存在文件,是否覆盖?(y/n)\n";
             if (trim(fgets(STDIN)) == 'n') {
                 echo "已结束运行";
                 return false;

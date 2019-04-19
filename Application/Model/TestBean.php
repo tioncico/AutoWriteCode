@@ -15,52 +15,88 @@ namespace App\Model;
  */
 class TestBean extends \EasySwoole\Spl\SplBean
 {
-	protected $id;
+	public $id;
 
-	protected $name;
+	public $name;
 
-	protected $testId;
+	public $testId;
 
-	protected $addTime;
+	public $addTime;
 
-	protected $note;
+	public $note;
 
-	protected $othe;
-
-
-	public function setId($id){$this->id=$id;}
+	public $othe;
 
 
-	public function getId(){ return $this->id;}
+	public function setId($id)
+	{
+		$this->id = $id;
+	}
 
 
-	public function setName($name){$this->name=$name;}
+	public function getId()
+	{
+		return $this->id;
+	}
 
 
-	public function getName(){ return $this->name;}
+	public function setName($name)
+	{
+		$this->name = $name;
+	}
 
 
-	public function setTestId($testId){$this->testId=$testId;}
+	public function getName()
+	{
+		return $this->name;
+	}
 
 
-	public function getTestId(){ return $this->testId;}
+	public function setTestId($testId)
+	{
+		$this->testId = $testId;
+	}
 
 
-	public function setAddTime($addTime){$this->addTime=$addTime;}
+	public function getTestId()
+	{
+		return $this->testId;
+	}
 
 
-	public function getAddTime(){ return $this->addTime;}
+	public function setAddTime($addTime)
+	{
+		$this->addTime = $addTime;
+	}
 
 
-	public function setNote($note){$this->note=$note;}
+	public function getAddTime()
+	{
+		return $this->addTime;
+	}
 
 
-	public function getNote(){ return $this->note;}
+	public function setNote($note)
+	{
+		$this->note = $note;
+	}
 
 
-	public function setOthe($othe){$this->othe=$othe;}
+	public function getNote()
+	{
+		return $this->note;
+	}
 
 
-	public function getOthe(){ return $this->othe;}
+	public function setOthe($othe)
+	{
+		$this->othe = $othe;
+	}
+
+
+	public function getOthe()
+	{
+		return $this->othe;
+	}
 }
 

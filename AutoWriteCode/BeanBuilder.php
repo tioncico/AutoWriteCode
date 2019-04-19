@@ -146,7 +146,7 @@ Body;
     protected function createPHPDocument($fileName, $fileContent, $tableColumns)
     {
         if (file_exists($fileName . '.php')) {
-            echo "当前路径已经存在文件,是否覆盖?(y/n)\n";
+            echo "(Bean)当前路径已经存在文件,是否覆盖?(y/n)\n";
             if (trim(fgets(STDIN)) == 'n') {
                 echo "已结束运行";
                 return false;
