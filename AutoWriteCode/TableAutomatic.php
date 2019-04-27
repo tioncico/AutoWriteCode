@@ -31,7 +31,7 @@ class TableAutomatic
     function initTableInfo(){
         $db = \App\Utility\Pool\MysqlPool::defer();
         $mysqlTable = new MysqlTable($db, \EasySwoole\EasySwoole\Config::getInstance()->getConf('MYSQL.database'));
-        $tableName = 'test';
+        $tableName = $this->tableName;
         $tableColumns = $mysqlTable->getColumnList($tableName);
         $tableComment = $mysqlTable->getComment($tableName);
         $this->tableColumns = $tableColumns;
