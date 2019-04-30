@@ -13,6 +13,10 @@ use EasySwoole\Spl\SplBean;
 
 class ModelConfig extends SplBean
 {
+    protected $tableName;//表名称
+    protected $tableComment;//表注释
+    protected $tableColumns;//表字段信息
+    protected $realTableName;//表(生成的文件)真实名称
     protected $extendClass;//继承的基类
     protected $baseDirectory;//生成的目录
     protected $baseNamespace;//生成的命名空间
@@ -22,6 +26,7 @@ class ModelConfig extends SplBean
         'log'
     ];//文件名生成时,忽略的字符串(list,log等)
     protected $primaryKey;
+
 
     /**
      * @return mixed
@@ -117,5 +122,70 @@ class ModelConfig extends SplBean
     public function setPrimaryKey($primaryKey)
     {
         $this->primaryKey = $primaryKey;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
+    /**
+     * @param mixed $tableName
+     */
+    public function setTableName($tableName): void
+    {
+        $this->tableName = $tableName;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTableComment()
+    {
+        return $this->tableComment;
+    }
+
+    /**
+     * @param mixed $tableComment
+     */
+    public function setTableComment($tableComment): void
+    {
+        $this->tableComment = $tableComment;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTableColumns()
+    {
+        return $this->tableColumns;
+    }
+
+    /**
+     * @param mixed $tableColumns
+     */
+    public function setTableColumns($tableColumns): void
+    {
+        $this->tableColumns = $tableColumns;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRealTableName()
+    {
+        return $this->realTableName;
+    }
+
+    /**
+     * @param mixed $realTableName
+     */
+    public function setRealTableName($realTableName): void
+    {
+        $this->realTableName = $realTableName;
     }//模型的主键
+
 }

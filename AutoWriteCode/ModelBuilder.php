@@ -32,7 +32,7 @@ class ModelBuilder
      */
     public function __construct(ModelConfig $config)
     {
-        $this->config=$config;
+        $this->config = $config;
         $this->createBaseDirectory($config->getBaseDirectory());
     }
 
@@ -56,26 +56,45 @@ class ModelBuilder
 
     /**
      * generateBean
-     * @param $tableName
-     * @param $tableComment
-     * @param $tableColumns
      * @return bool|int
      * @author Tioncico
      * Time: 19:49
      */
-    public function generateModel($tableName, $tableComment, $tableColumns)
+    public function generateModel()
     {
         $phpNamespace = new PhpNamespace($this->config->getBaseNamespace());
-        $realTableName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Model';
-        $phpClass = $this->addClassBaseContent($tableName, $realTableName, $phpNamespace, $tableComment, $tableColumns);
+        $realTableName = $this->setRealTableName() . 'Model';
+        $phpClass = $this->addClassBaseContent($this->config->getTableName(), $realTableName, $phpNamespace, $this->config->getTableComment(), $this->config->getTableColumns());
         //配置getAll
         $this->addGetAllMethod($phpClass);
-        $this->addGetOneMethod($phpClass, $tableName, $tableColumns);
-        $this->addAddMethod($phpClass, $tableName, $tableColumns);
-        $this->addDeleteMethod($phpClass, $tableName, $tableColumns);
-        $this->addUpdateMethod($phpClass, $tableName, $tableColumns);
+        $this->addGetOneMethod($phpClass, $this->config->getTableName(), $this->config->getTableColumns());
+        $this->addAddMethod($phpClass, $this->config->getTableName(), $this->config->getTableColumns());
+        $this->addDeleteMethod($phpClass, $this->config->getTableName(), $this->config->getTableColumns());
+        $this->addUpdateMethod($phpClass, $this->config->getTableName(), $this->config->getTableColumns());
 
-        return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $tableColumns);
+        return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $this->config->getTableColumns());
+    }
+
+    /**
+     * 处理表真实名称
+     * setRealTableName
+     * @return bool|mixed|string
+     * @author tioncico
+     * Time: 下午11:55
+     */
+    function setRealTableName()
+    {
+        if ($this->config->getRealTableName()) {
+            return $this->config->getRealTableName();
+        }
+        //先去除前缀
+        $tableName = substr($this->config->getTableName(), strlen($this->config->getTablePre()));
+        //去除后缀
+        $tableName = str_replace($this->config->getIgnoreString(), '', $tableName);
+        //下划线转驼峰,并且首字母大写
+        $tableName = ucfirst(Str::camel($tableName));
+        $this->config->setRealTableName($tableName);
+        return $tableName;
     }
 
     /**
@@ -116,7 +135,7 @@ class ModelBuilder
     protected function addUpdateMethod(ClassType $phpClass, $tableName, $tableColumns)
     {
         $method = $phpClass->addMethod('update');
-        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
+        $beanName = $this->setRealTableName() . 'Bean';;
         $namespaceBeanName = $this->config->getBaseNamespace() . '\\' . $beanName;
         //配置基础注释
         $method->addComment("默认根据主键({$this->config->getPrimaryKey()})进行更新");
@@ -144,7 +163,7 @@ Body;
     protected function addDeleteMethod(ClassType $phpClass, $tableName, $tableColumns)
     {
         $method = $phpClass->addMethod('delete');
-        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
+        $beanName = $this->setRealTableName() . 'Bean';;
         $namespaceBeanName = $this->config->getBaseNamespace() . '\\' . $beanName;
         //配置基础注释
         $method->addComment("默认根据主键({$this->config->getPrimaryKey()})进行删除");
@@ -167,7 +186,7 @@ Body;
     protected function addAddMethod(ClassType $phpClass, $tableName, $tableColumns)
     {
         $method = $phpClass->addMethod('add');
-        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
+        $beanName = $this->setRealTableName() . 'Bean';;
         $namespaceBeanName = $this->config->getBaseNamespace() . '\\' . $beanName;
         //配置基础注释
         $method->addComment("默认根据bean数据进行插入数据");
@@ -188,7 +207,7 @@ Body;
     protected function addGetOneMethod(ClassType $phpClass, $tableName, $tableColumns)
     {
         $method = $phpClass->addMethod('getOne');
-        $beanName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
+        $beanName = $this->setRealTableName() . 'Bean';;
         $namespaceBeanName = $this->config->getBaseNamespace() . '\\' . $beanName;
         //配置基础注释
         $method->addComment("默认根据主键({$this->config->getPrimaryKey()})进行搜索");

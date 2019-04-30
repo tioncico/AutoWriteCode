@@ -32,7 +32,7 @@ class BeanBuilder
      */
     public function __construct(BeanConfig $config)
     {
-        $this->config=$config;
+        $this->config = $config;
         $this->createBaseDirectory($config->getBaseDirectory());
     }
 
@@ -56,24 +56,21 @@ class BeanBuilder
 
     /**
      * generateBean
-     * @param $tableName
-     * @param $tableComment
-     * @param $tableColumns
      * @return bool|int
      * @author Tioncico
      * Time: 19:49
      */
-    public function generateBean($tableName, $tableComment, $tableColumns)
+    public function generateBean()
     {
-        $realTableName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
+        $realTableName = $this->setRealTableName() . 'Bean';
 
         $phpNamespace = new PhpNamespace($this->config->getBaseNamespace());
         $phpClass = $phpNamespace->addClass($realTableName);
         $phpClass->addExtend("EasySwoole\Spl\\SplBean");
-        $phpClass->addComment("{$tableComment}");
+        $phpClass->addComment("{$this->config->getTableComment()}");
         $phpClass->addComment("Class {$realTableName}");
         $phpClass->addComment('Create With Automatic Generator');
-        foreach ($tableColumns as $column) {
+        foreach ($this->config->getTableColumns() as $column) {
             $name = $column['Field'];
             $comment = $column['Comment'];
             $columnType = $this->convertDbTypeToDocType($column['Type']);
@@ -82,7 +79,29 @@ class BeanBuilder
             $this->addSetMethod($phpClass, $column['Field']);
             $this->addGetMethod($phpClass, $column['Field']);
         }
-        return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $tableColumns);
+        return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $this->config->getTableColumns());
+    }
+
+    /**
+     * 处理表真实名称
+     * setRealTableName
+     * @return bool|mixed|string
+     * @author tioncico
+     * Time: 下午11:55
+     */
+    function setRealTableName()
+    {
+        if ($this->config->getRealTableName()){
+            return $this->config->getRealTableName();
+        }
+        //先去除前缀
+        $tableName = substr($this->config->getTableName(), strlen($this->config->getTablePre()));
+        //去除后缀
+        $tableName = str_replace($this->config->getIgnoreString(),'',$tableName);
+        //下划线转驼峰,并且首字母大写
+        $tableName = ucfirst(Str::camel($tableName));
+        $this->config->setRealTableName($tableName);
+        return $tableName;
     }
 
     function addSetMethod(ClassType $phpClass, $column)
@@ -96,7 +115,6 @@ Body;
         $method->setBody($methodBody);
     }
 
-
     function addGetMethod(ClassType $phpClass, $column)
     {
         $method = $phpClass->addMethod("get" . Str::studly($column));
@@ -106,7 +124,6 @@ Body;
         //配置方法内容
         $method->setBody($methodBody);
     }
-
 
     /**
      * convertDbTypeToDocType

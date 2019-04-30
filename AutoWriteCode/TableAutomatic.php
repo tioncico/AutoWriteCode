@@ -82,6 +82,9 @@ class TableAutomatic
         $modelConfig->setBaseNamespace($this->namespace);
         $modelConfig->setTablePre($this->tablePre);
         $modelConfig->setExtendClass(BaseModel::class);
+        $modelConfig->setTableName($this->tableName);
+        $modelConfig->setTableComment($tableComment);
+        $modelConfig->setTableColumns($tableColumns);
         $modelBuilder = new ModelBuilder($modelConfig);
         return $modelBuilder->generateModel($this->tableName, $tableComment, $tableColumns);
     }
@@ -92,6 +95,9 @@ class TableAutomatic
         $beanConfig->setBaseDirectory($this->baseDir);
         $beanConfig->setBaseNamespace($this->namespace);
         $beanConfig->setTablePre($this->tablePre);
+        $beanConfig->setTableName($this->tableName);
+        $beanConfig->setTableComment($tableComment);
+        $beanConfig->setTableColumns($tableColumns);
         $beanBuilder = new BeanBuilder($beanConfig);
         return $beanBuilder->generateBean($this->tableName, $tableComment, $tableColumns);
     }
