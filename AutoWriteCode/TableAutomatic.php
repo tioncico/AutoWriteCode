@@ -9,6 +9,9 @@
 namespace AutoWriteCode;
 
 use App\Model\BaseModel;
+use AutoWriteCode\Config\BeanConfig;
+use AutoWriteCode\Config\ModelConfig;
+use mysql_xdevapi\Exception;
 
 class TableAutomatic
 {
@@ -34,6 +37,9 @@ class TableAutomatic
         $tableName = $this->tableName;
         $tableColumns = $mysqlTable->getColumnList($tableName);
         $tableComment = $mysqlTable->getComment($tableName);
+        if (empty($tableColumns)){
+            throw new \Exception("{$tableName}表不存在");
+        }
         $this->tableColumns = $tableColumns;
         $this->tableComment = $tableComment;
     }
@@ -71,13 +77,22 @@ class TableAutomatic
 
     function generateModel($tableColumns, $tableComment, $extendClass = null)
     {
-        $modelBuilder = new ModelBuilder($this->baseDir, $this->namespace, $extendClass);
+        $modelConfig = new ModelConfig();
+        $modelConfig->setBaseDirectory($this->baseDir);
+        $modelConfig->setBaseNamespace($this->namespace);
+        $modelConfig->setTablePre($this->tablePre);
+        $modelConfig->setExtendClass(BaseModel::class);
+        $modelBuilder = new ModelBuilder($modelConfig);
         return $modelBuilder->generateModel($this->tableName, $tableComment, $tableColumns);
     }
 
     function generateBean($tableColumns, $tableComment)
     {
-        $beanBuilder = new BeanBuilder($this->baseDir, $this->namespace);
+        $beanConfig = new BeanConfig();
+        $beanConfig->setBaseDirectory($this->baseDir);
+        $beanConfig->setBaseNamespace($this->namespace);
+        $beanConfig->setTablePre($this->tablePre);
+        $beanBuilder = new BeanBuilder($beanConfig);
         return $beanBuilder->generateBean($this->tableName, $tableComment, $tableColumns);
     }
 

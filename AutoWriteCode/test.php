@@ -10,7 +10,6 @@ defined('EASYSWOOLE_ROOT') or define('EASYSWOOLE_ROOT', dirname(__FILE__, 2));
 require_once EASYSWOOLE_ROOT . '/EasySwooleEvent.php';
 \EasySwoole\EasySwoole\Core::getInstance()->initialize();
 go(function ()  {
-
-    $automatic = new \AutoWriteCode\TableAutomatic('test', '');
+    $automatic = new \AutoWriteCode\TableAutomatic('user_list', '');
     $automatic->action();
 });

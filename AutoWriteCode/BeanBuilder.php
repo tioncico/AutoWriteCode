@@ -8,6 +8,7 @@
 
 namespace AutoWriteCode;
 
+use AutoWriteCode\Config\BeanConfig;
 use EasySwoole\Utility\Str;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
@@ -19,24 +20,20 @@ use Nette\PhpGenerator\PhpNamespace;
  */
 class BeanBuilder
 {
-    protected $basePath;
-    protected $nameType = 1;
-    protected $baseNamespace;
-    protected $tablePre = '';
+    /**
+     * @var $config BeanConfig;
+     */
+    protected $config;
 
     /**
      * BeanBuilder constructor.
-     * @param        $baseDirectory
-     * @param        $baseNamespace
-     * @param string $tablePre
+     * @param        $config
      * @throws \Exception
      */
-    public function __construct($baseDirectory, $baseNamespace, $tablePre = '')
+    public function __construct(BeanConfig $config)
     {
-        $this->basePath = $baseDirectory;
-        $this->createBaseDirectory($baseDirectory);
-        $this->baseNamespace = $baseNamespace;
-        $this->tablePre = $tablePre;
+        $this->config=$config;
+        $this->createBaseDirectory($config->getBaseDirectory());
     }
 
     /**
@@ -68,9 +65,9 @@ class BeanBuilder
      */
     public function generateBean($tableName, $tableComment, $tableColumns)
     {
-        $realTableName = ucfirst(Str::camel(substr($tableName, strlen($this->tablePre)))) . 'Bean';
+        $realTableName = ucfirst(Str::camel(substr($tableName, strlen($this->config->getTablePre())))) . 'Bean';
 
-        $phpNamespace = new PhpNamespace($this->baseNamespace);
+        $phpNamespace = new PhpNamespace($this->config->getBaseNamespace());
         $phpClass = $phpNamespace->addClass($realTableName);
         $phpClass->addExtend("EasySwoole\Spl\\SplBean");
         $phpClass->addComment("{$tableComment}");
@@ -81,11 +78,11 @@ class BeanBuilder
             $comment = $column['Comment'];
             $columnType = $this->convertDbTypeToDocType($column['Type']);
             $phpClass->addComment("@property {$columnType} {$name} | {$comment}");
-            $phpClass->addProperty($column['Field']);
+            $phpClass->addProperty($column['Field'])->setVisibility('protected');
             $this->addSetMethod($phpClass, $column['Field']);
             $this->addGetMethod($phpClass, $column['Field']);
         }
-        return $this->createPHPDocument($this->basePath . '/' . $realTableName, $phpNamespace, $tableColumns);
+        return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $tableColumns);
     }
 
     function addSetMethod(ClassType $phpClass, $column)
