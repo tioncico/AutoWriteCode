@@ -11,7 +11,6 @@ namespace AutoWriteCode;
 use App\Model\BaseModel;
 use AutoWriteCode\Config\BeanConfig;
 use AutoWriteCode\Config\ModelConfig;
-use mysql_xdevapi\Exception;
 
 class TableAutomatic
 {
@@ -31,13 +30,15 @@ class TableAutomatic
         $this->namespace = $namespace ?? 'App\Model';
         $this->initTableInfo();
     }
-    function initTableInfo(){
+
+    function initTableInfo()
+    {
         $db = \App\Utility\Pool\MysqlPool::defer();
         $mysqlTable = new MysqlTable($db, \EasySwoole\EasySwoole\Config::getInstance()->getConf('MYSQL.database'));
         $tableName = $this->tableName;
         $tableColumns = $mysqlTable->getColumnList($tableName);
         $tableComment = $mysqlTable->getComment($tableName);
-        if (empty($tableColumns)){
+        if (empty($tableColumns)) {
             throw new \Exception("{$tableName}表不存在");
         }
         $this->tableColumns = $tableColumns;
@@ -81,7 +82,7 @@ class TableAutomatic
         $modelConfig->setBaseDirectory($this->baseDir);
         $modelConfig->setBaseNamespace($this->namespace);
         $modelConfig->setTablePre($this->tablePre);
-        $modelConfig->setExtendClass(BaseModel::class);
+        $modelConfig->setExtendClass($extendClass ?? BaseModel::class);
         $modelConfig->setTableName($this->tableName);
         $modelConfig->setTableComment($tableComment);
         $modelConfig->setTableColumns($tableColumns);
