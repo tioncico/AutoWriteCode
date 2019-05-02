@@ -117,12 +117,16 @@ Body;
                     $method->addComment("@apiParam {$columnType} [{$column['Field']}] {$column['Comment']}");
                     $methodBody.="\$bean->$setMethodName(\$param['{$column['Field']}']);\n";
                 }
+            }else{
+                $this->config->setPrimaryKey($column['Field']);
             }
         }
+        $setPrimaryKeyMethodName = "set" . Str::studly($this->config->getPrimaryKey());
         $methodBody.=<<<Body
 \$rs = \$model->add(\$bean);
 if (\$rs) {
-    \$this->writeJson(Status::CODE_OK, \$rs, "success");
+    \$bean->$setPrimaryKeyMethodName(\$db->getInsertId());
+    \$this->writeJson(Status::CODE_OK, \$bean->toArray(), "success");
 } else {
     \$this->writeJson(Status::CODE_BAD_REQUEST, [], \$db->getLastError());
 }
@@ -133,6 +137,7 @@ Body;
         $method->addComment("@apiSuccess {String} msg");
         $method->addComment("@apiSuccessExample {json} Success-Response:");
         $method->addComment("HTTP/1.1 200 OK");
+        $method->addComment("{\"code\":0,\"data\":{},\"msg\":\"success\"}");
         $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
     }
 
