@@ -8,26 +8,36 @@
 
 namespace AutoWriteCode;
 
+use App\HttpController\Api\ApiBase;
+use App\HttpController\Base;
 use App\Model\BaseModel;
+use App\Model\UserBean;
+use App\Model\UserModel;
+use App\Utility\Pool\MysqlPool;
 use AutoWriteCode\Config\BeanConfig;
+use AutoWriteCode\Config\ControllerConfig;
 use AutoWriteCode\Config\ModelConfig;
 
 class TableAutomatic
 {
     const APP_PATH = 'Application';
-    protected $tableName;
-    protected $tablePre;
-    protected $baseDir;
-    protected $namespace;
-    protected $tableColumns;
-    protected $tableComment;
+    public $tableName;
+    public $tablePre;
+    public $baseDir;
+    public $beanNamespace;
+    public $modelNamespace;
+    public $controllerNamespace;
+    public $tableColumns;
+    public $tableComment;
 
-    public function __construct($tableName, $tablePre, $baseDir = null, $namespace = null)
+    public function __construct($tableName, $tablePre, $baseDir = null, $beanNamespace=null, $modelNamespace=null, $controllerNamespace=null)
     {
         $this->tableName = $tableName;
         $this->tablePre = $tablePre;
         $this->baseDir = $baseDir ?? EASYSWOOLE_ROOT . '/' . self::APP_PATH . '/Model';
-        $this->namespace = $namespace ?? 'App\Model';
+        $this->beanNamespace = $beanNamespace ?? 'App\\Model';
+        $this->modelNamespace = $modelNamespace ?? 'App\\Model';
+        $this->controllerNamespace = $controllerNamespace ?? 'App\\HttpController\\Api';
         $this->initTableInfo();
     }
 
@@ -65,12 +75,12 @@ class TableAutomatic
             }
         }
         if ($generateController) {
-//                $result = $this->generateBean($tableColumns,$tableComment);
-//                if ($result){
-//                    echo "生成[{$result}]成功\n";
-//                }else{
-//                    echo "生成bean失败";
-//                }
+            $result = $this->generateController($this->tableColumns, $this->tableComment, ApiBase::class);
+            if ($result) {
+                echo "生成[{$result}]成功\n";
+            } else {
+                echo "生成Controller失败";
+            }
         }
 
         exit;
@@ -80,27 +90,45 @@ class TableAutomatic
     {
         $modelConfig = new ModelConfig();
         $modelConfig->setBaseDirectory($this->baseDir);
-        $modelConfig->setBaseNamespace($this->namespace);
+        $modelConfig->setBaseNamespace($this->modelNamespace);
         $modelConfig->setTablePre($this->tablePre);
         $modelConfig->setExtendClass($extendClass ?? BaseModel::class);
         $modelConfig->setTableName($this->tableName);
         $modelConfig->setTableComment($tableComment);
         $modelConfig->setTableColumns($tableColumns);
         $modelBuilder = new ModelBuilder($modelConfig);
-        return $modelBuilder->generateModel($this->tableName, $tableComment, $tableColumns);
+        return $modelBuilder->generateModel();
     }
 
     function generateBean($tableColumns, $tableComment)
     {
         $beanConfig = new BeanConfig();
         $beanConfig->setBaseDirectory($this->baseDir);
-        $beanConfig->setBaseNamespace($this->namespace);
+        $beanConfig->setBaseNamespace($this->beanNamespace);
         $beanConfig->setTablePre($this->tablePre);
         $beanConfig->setTableName($this->tableName);
         $beanConfig->setTableComment($tableComment);
         $beanConfig->setTableColumns($tableColumns);
         $beanBuilder = new BeanBuilder($beanConfig);
-        return $beanBuilder->generateBean($this->tableName, $tableComment, $tableColumns);
+        return $beanBuilder->generateBean();
+    }
+
+
+    function generateController($tableColumns, $tableComment, $extendClass)
+    {
+        $controllerConfig = new ControllerConfig();
+        $controllerConfig->setBaseDirectory($this->baseDir);
+        $controllerConfig->setBaseNamespace($this->controllerNamespace);
+        $controllerConfig->setTablePre($this->tablePre);
+        $controllerConfig->setTableName($this->tableName);
+        $controllerConfig->setTableComment($tableComment);
+        $controllerConfig->setTableColumns($tableColumns);
+        $controllerConfig->setExtendClass($extendClass ?? ApiBase::class);
+        $controllerConfig->setModelClass(UserModel::class);
+        $controllerConfig->setBeanClass(UserBean::class);
+        $controllerConfig->setMysqlPoolClass(MysqlPool::class);
+        $controllerBuilder = new ControllerBuilder($controllerConfig);
+        return $controllerBuilder->generateController();
     }
 
 }

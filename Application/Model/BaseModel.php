@@ -1,26 +1,26 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yf
- * Date: 2018/10/26
- * Time: 4:07 PM
- */
 
 namespace App\Model;
 
-
-use App\Utility\Pool\MysqlPoolObject;
-
+/**
+ * BaseModel
+ * Class BaseModel
+ * Create With Automatic Generator
+ */
 class BaseModel
 {
-    private $db;
-    function __construct(MysqlPoolObject $dbObject)
-    {
-        $this->db = $dbObject;
-    }
+	protected $db;
 
-    function getDbConnection():MysqlPoolObject
-    {
-        return $this->db;
-    }
+
+	public function __construct(\App\Utility\Pool\MysqlPoolObject $dbObject)
+	{
+		$this->db = $dbObject;
+	}
+
+
+	public function getDbConnection(): \App\Utility\Pool\MysqlPoolObject
+	{
+		return $this->db;
+	}
 }
+

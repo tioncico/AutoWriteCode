@@ -7,6 +7,6 @@
 /Temp2/
 /easyswoole
 
-dev.env
+dev.php
 
-produce.env
+produce.php

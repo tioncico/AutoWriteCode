@@ -132,7 +132,7 @@ class ModelBuilder
         return $phpClass;
     }
 
-    protected function addUpdateMethod(ClassType $phpClass, $tableName, $tableColumns)
+    protected function addUpdateMethod(ClassType $phpClass)
     {
         $method = $phpClass->addMethod('update');
         $beanName = $this->setRealTableName() . 'Bean';;
@@ -160,7 +160,7 @@ Body;
         $method->addComment("@return bool");
     }
 
-    protected function addDeleteMethod(ClassType $phpClass, $tableName, $tableColumns)
+    protected function addDeleteMethod(ClassType $phpClass)
     {
         $method = $phpClass->addMethod('delete');
         $beanName = $this->setRealTableName() . 'Bean';;
@@ -183,7 +183,7 @@ Body;
         $method->addComment("@return bool");
     }
 
-    protected function addAddMethod(ClassType $phpClass, $tableName, $tableColumns)
+    protected function addAddMethod(ClassType $phpClass)
     {
         $method = $phpClass->addMethod('add');
         $beanName = $this->setRealTableName() . 'Bean';;
@@ -204,7 +204,7 @@ Body;
         $method->addComment("@return bool");
     }
 
-    protected function addGetOneMethod(ClassType $phpClass, $tableName, $tableColumns)
+    protected function addGetOneMethod(ClassType $phpClass)
     {
         $method = $phpClass->addMethod('getOne');
         $beanName = $this->setRealTableName() . 'Bean';;
