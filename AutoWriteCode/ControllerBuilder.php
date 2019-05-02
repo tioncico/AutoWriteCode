@@ -9,6 +9,7 @@
 namespace AutoWriteCode;
 
 use AutoWriteCode\Config\ControllerConfig;
+use EasySwoole\Http\Message\Status;
 use EasySwoole\Utility\Str;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
@@ -65,6 +66,10 @@ class ControllerBuilder
         $realTableName = $this->setRealTableName();
 
         $phpNamespace = new PhpNamespace($this->config->getBaseNamespace());
+        $phpNamespace->addUse($this->config->getMysqlPoolClass());
+        $phpNamespace->addUse($this->config->getModelClass());
+        $phpNamespace->addUse($this->config->getBeanClass());
+        $phpNamespace->addUse(Status::class);
         $phpClass = $phpNamespace->addClass($realTableName);
         $phpClass->addExtend($this->config->getExtendClass());
         $phpClass->addComment("{$this->config->getTableComment()}");
@@ -87,12 +92,17 @@ class ControllerBuilder
         $method->addComment("@apiPermission {$this->config->getAuthName()}");
         $method->addComment("@apiDescription add新增数据");
         $this->config->getAuthSessionName()&&($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
-
+        $mysqlPoolNameArr = (explode('\\',$this->config->getMysqlPoolClass()));
+        $mysqlPoolName = end($mysqlPoolNameArr);
+        $modelNameArr = (explode('\\',$this->config->getModelClass()));
+        $modelName = end($modelNameArr);
+        $beanNameArr = (explode('\\',$this->config->getBeanClass()));
+        $beanName = end($beanNameArr);
         $methodBody = <<<Body
-\$db = {$this->config->getMysqlPoolClass()}::defer();
+\$db = {$mysqlPoolName}::defer();
 \$param = \$this->request()->getRequestParam();
-\$model = new \\{$this->config->getModelClass()}(\$db);
-\$bean = new \\{$this->config->getBeanClass()}();
+\$model = new {$modelName}(\$db);
+\$bean = new {$beanName}();
 
 Body;
         foreach ($this->config->getTableColumns() as $column){
