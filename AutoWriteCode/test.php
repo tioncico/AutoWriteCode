@@ -23,6 +23,8 @@ go(function ()  {
     $controllerConfig->setModelClass(\App\Model\UserModel::class);
     $controllerConfig->setBeanClass(\App\Model\UserBean::class);
     $controllerConfig->setMysqlPoolClass(\App\Utility\Pool\MysqlPool::class);
+    $controllerConfig->setAuthName('admin');
+    $controllerConfig->setAuthSessionName('adminSession');
     $controllerBuilder = new \AutoWriteCode\ControllerBuilder($controllerConfig);
     $controllerBuilder->generateController();
     exit();
