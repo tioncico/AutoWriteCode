@@ -76,27 +76,31 @@ class ControllerBuilder
         $phpClass->addComment("Class {$realTableName}");
         $phpClass->addComment('Create With Automatic Generator');
         $this->addAddDataMethod($phpClass);
+        $this->addUpdateDataMethod($phpClass);
+        $this->addGetOneDataMethod($phpClass);
+        $this->addGetAllDataMethod($phpClass);
 
 
         return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $this->config->getTableColumns());
     }
 
-    function addAddDataMethod(ClassType $phpClass){
+    function addAddDataMethod(ClassType $phpClass)
+    {
         $addData = [];
         $method = $phpClass->addMethod('add');
-        $apiUrl = str_replace(['App\\HttpController','\\'],['','/'],$this->config->getBaseNamespace());
+        $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
         //配置基础注释
         $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/add");
         $method->addComment("@apiName add");
         $method->addComment("@apiGroup {$apiUrl}/{$this->setRealTableName()}");
         $method->addComment("@apiPermission {$this->config->getAuthName()}");
         $method->addComment("@apiDescription add新增数据");
-        $this->config->getAuthSessionName()&&($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
-        $mysqlPoolNameArr = (explode('\\',$this->config->getMysqlPoolClass()));
+        $this->config->getAuthSessionName() && ($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
+        $mysqlPoolNameArr = (explode('\\', $this->config->getMysqlPoolClass()));
         $mysqlPoolName = end($mysqlPoolNameArr);
-        $modelNameArr = (explode('\\',$this->config->getModelClass()));
+        $modelNameArr = (explode('\\', $this->config->getModelClass()));
         $modelName = end($modelNameArr);
-        $beanNameArr = (explode('\\',$this->config->getBeanClass()));
+        $beanNameArr = (explode('\\', $this->config->getBeanClass()));
         $beanName = end($beanNameArr);
         $methodBody = <<<Body
 \$db = {$mysqlPoolName}::defer();
@@ -105,24 +109,24 @@ class ControllerBuilder
 \$bean = new {$beanName}();
 
 Body;
-        foreach ($this->config->getTableColumns() as $column){
-            if ($column['Key']!='PRI'){
-                $addData[]=$column['Field'];
+        foreach ($this->config->getTableColumns() as $column) {
+            if ($column['Key'] != 'PRI') {
+                $addData[] = $column['Field'];
                 $columnType = $this->convertDbTypeToDocType($column['Type']);
                 $setMethodName = "set" . Str::studly($column['Field']);
-                if ($column['Null']=='NO'){
+                if ($column['Null'] == 'NO') {
                     $method->addComment("@apiParam {$columnType} {$column['Field']} {$column['Comment']}");
-                    $methodBody.="\$bean->$setMethodName(\$param['{$column['Field']}']);\n";
-                }else{
+                    $methodBody .= "\$bean->$setMethodName(\$param['{$column['Field']}']);\n";
+                } else {
                     $method->addComment("@apiParam {$columnType} [{$column['Field']}] {$column['Comment']}");
-                    $methodBody.="\$bean->$setMethodName(\$param['{$column['Field']}']);\n";
+                    $methodBody .= "\$bean->$setMethodName(\$param['{$column['Field']}']??'');\n";
                 }
-            }else{
+            } else {
                 $this->config->setPrimaryKey($column['Field']);
             }
         }
         $setPrimaryKeyMethodName = "set" . Str::studly($this->config->getPrimaryKey());
-        $methodBody.=<<<Body
+        $methodBody .= <<<Body
 \$rs = \$model->add(\$bean);
 if (\$rs) {
     \$bean->$setPrimaryKeyMethodName(\$db->getInsertId());
@@ -137,11 +141,149 @@ Body;
         $method->addComment("@apiSuccess {String} msg");
         $method->addComment("@apiSuccessExample {json} Success-Response:");
         $method->addComment("HTTP/1.1 200 OK");
-        $method->addComment("{\"code\":0,\"data\":{},\"msg\":\"success\"}");
+        $method->addComment("{\"code\":200,\"data\":{},\"msg\":\"success\"}");
         $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
     }
 
+    function addUpdateDataMethod(ClassType $phpClass)
+    {
+        $addData = [];
+        $method = $phpClass->addMethod('update');
+        $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
+        //配置基础注释
+        $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/update");
+        $method->addComment("@apiName update");
+        $method->addComment("@apiGroup {$apiUrl}/{$this->setRealTableName()}");
+        $method->addComment("@apiPermission {$this->config->getAuthName()}");
+        $method->addComment("@apiDescription update修改数据");
+        $this->config->getAuthSessionName() && ($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
+        $method->addComment("@apiParam {int} {$this->config->getPrimaryKey()} 主键id");
+        $mysqlPoolNameArr = (explode('\\', $this->config->getMysqlPoolClass()));
+        $mysqlPoolName = end($mysqlPoolNameArr);
+        $modelNameArr = (explode('\\', $this->config->getModelClass()));
+        $modelName = end($modelNameArr);
+        $beanNameArr = (explode('\\', $this->config->getBeanClass()));
+        $beanName = end($beanNameArr);
+        $methodBody = <<<Body
+\$db = {$mysqlPoolName}::defer();
+\$param = \$this->request()->getRequestParam();
+\$model = new {$modelName}(\$db);
+\$bean = \$model->getOne(new {$beanName}(['{$this->config->getPrimaryKey()}' => \$param['{$this->config->getPrimaryKey()}']]));
+if (empty(\$bean)) {
+    \$this->writeJson(Status::CODE_BAD_REQUEST, [], '该数据不存在');
+    return false;
+}
+\$updateBean = new {$beanName}();
+\n
+Body;
+        foreach ($this->config->getTableColumns() as $column) {
+            if ($column['Key'] != 'PRI') {
+                $addData[] = $column['Field'];
+                $columnType = $this->convertDbTypeToDocType($column['Type']);
+                $setMethodName = "set" . Str::studly($column['Field']);
+                $getMethodName = "get" . Str::studly($column['Field']);
+                $method->addComment("@apiParam {$columnType} [{$column['Field']}] {$column['Comment']}");
+                $methodBody .= "\$updateBean->$setMethodName(\$param['{$column['Field']}']??\$bean->$getMethodName());\n";
+            } else {
+                $this->config->setPrimaryKey($column['Field']);
+            }
+        }
+        $setPrimaryKeyMethodName = "set" . Str::studly($this->config->getPrimaryKey());
+        $methodBody .= <<<Body
+\$rs = \$model->update(\$bean, \$updateBean->toArray([], \$updateBean::FILTER_NOT_EMPTY));
+if (\$rs) {
+    \$this->writeJson(Status::CODE_OK, \$rs, "success");
+} else {
+    \$this->writeJson(Status::CODE_BAD_REQUEST, [], \$db->getLastError());
+}
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@apiSuccess {Number} code");
+        $method->addComment("@apiSuccess {Object[]} data");
+        $method->addComment("@apiSuccess {String} msg");
+        $method->addComment("@apiSuccessExample {json} Success-Response:");
+        $method->addComment("HTTP/1.1 200 OK");
+        $method->addComment("{\"code\":200,\"data\":{},\"msg\":\"success\"}");
+        $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
+    }
 
+    function addGetOneDataMethod(ClassType $phpClass){
+        $addData = [];
+        $method = $phpClass->addMethod('getOne');
+        $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
+        //配置基础注释
+        $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/getOne");
+        $method->addComment("@apiName getOne");
+        $method->addComment("@apiGroup {$apiUrl}/{$this->setRealTableName()}");
+        $method->addComment("@apiPermission {$this->config->getAuthName()}");
+        $method->addComment("@apiDescription 根据主键获取一条信息");
+        $this->config->getAuthSessionName() && ($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
+        $method->addComment("@apiParam {int} {$this->config->getPrimaryKey()} 主键id");
+        $mysqlPoolNameArr = (explode('\\', $this->config->getMysqlPoolClass()));
+        $mysqlPoolName = end($mysqlPoolNameArr);
+        $modelNameArr = (explode('\\', $this->config->getModelClass()));
+        $modelName = end($modelNameArr);
+        $beanNameArr = (explode('\\', $this->config->getBeanClass()));
+        $beanName = end($beanNameArr);
+        $methodBody = <<<Body
+\$db = {$mysqlPoolName}::defer();
+\$param = \$this->request()->getRequestParam();
+\$model = new {$modelName}(\$db);
+\$bean = \$model->getOne(new {$beanName}(['{$this->config->getPrimaryKey()}' => \$param['{$this->config->getPrimaryKey()}']]));
+if (\$bean) {
+    \$this->writeJson(Status::CODE_OK, \$bean, "success");
+} else {
+    \$this->writeJson(Status::CODE_BAD_REQUEST, [], 'fail');
+}
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@apiSuccess {Number} code");
+        $method->addComment("@apiSuccess {Object[]} data");
+        $method->addComment("@apiSuccess {String} msg");
+        $method->addComment("@apiSuccessExample {json} Success-Response:");
+        $method->addComment("HTTP/1.1 200 OK");
+        $method->addComment("{\"code\":200,\"data\":{},\"msg\":\"success\"}");
+        $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
+    }
+
+    function addGetAllDataMethod(ClassType $phpClass){
+        $addData = [];
+        $method = $phpClass->addMethod('getAll');
+        $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
+        //配置基础注释
+        $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/getAll");
+        $method->addComment("@apiName getAll");
+        $method->addComment("@apiGroup {$apiUrl}/{$this->setRealTableName()}");
+        $method->addComment("@apiPermission {$this->config->getAuthName()}");
+        $method->addComment("@apiDescription 获取一个列表");
+        $this->config->getAuthSessionName() && ($method->addComment("* @apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
+        $method->addComment("@apiParam {String} [page=1]");
+        $method->addComment("@apiParam {String} [limit=20]");
+        $method->addComment("@apiParam {String} [keyword] 关键字,根据表的不同而不同");
+        $mysqlPoolNameArr = (explode('\\', $this->config->getMysqlPoolClass()));
+        $mysqlPoolName = end($mysqlPoolNameArr);
+        $modelNameArr = (explode('\\', $this->config->getModelClass()));
+        $modelName = end($modelNameArr);
+        $beanNameArr = (explode('\\', $this->config->getBeanClass()));
+        $beanName = end($beanNameArr);
+        $methodBody = <<<Body
+\$db = {$mysqlPoolName}::defer();
+\$param = \$this->request()->getRequestParam();
+\$page = (int)\$param['page']??1;
+\$limit = (int)\$param['limit']??20;
+\$model = new {$modelName}(\$db);
+\$data = \$model->getAll(\$page, \$param['keyword']??null, \$limit);
+\$this->writeJson(Status::CODE_OK, \$data, 'success');
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@apiSuccess {Number} code");
+        $method->addComment("@apiSuccess {Object[]} data");
+        $method->addComment("@apiSuccess {String} msg");
+        $method->addComment("@apiSuccessExample {json} Success-Response:");
+        $method->addComment("HTTP/1.1 200 OK");
+        $method->addComment("{\"code\":200,\"data\":{},\"msg\":\"success\"}");
+        $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
+    }
 
 
     /**
@@ -153,20 +295,21 @@ Body;
      */
     function setRealTableName()
     {
-        if ($this->config->getRealTableName()){
+        if ($this->config->getRealTableName()) {
             return $this->config->getRealTableName();
         }
         //先去除前缀
         $tableName = substr($this->config->getTableName(), strlen($this->config->getTablePre()));
         //去除后缀
-        $tableName = str_replace($this->config->getIgnoreString(),'',$tableName);
+        $tableName = str_replace($this->config->getIgnoreString(), '', $tableName);
         //下划线转驼峰,并且首字母大写
         $tableName = ucfirst(Str::camel($tableName));
         $this->config->setRealTableName($tableName);
         return $tableName;
     }
 
-    function getColumnDeaflutValue($column){
+    function getColumnDeaflutValue($column)
+    {
 
     }
 
