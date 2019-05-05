@@ -115,10 +115,10 @@ Body;
                 $columnType = $this->convertDbTypeToDocType($column['Type']);
                 $setMethodName = "set" . Str::studly($column['Field']);
                 if ($column['Null'] == 'NO') {
-                    $method->addComment("@apiParam {$columnType} {$column['Field']} {$column['Comment']}");
+                    $method->addComment("@apiParam {{$columnType}} {$column['Field']} {$column['Comment']}");
                     $methodBody .= "\$bean->$setMethodName(\$param['{$column['Field']}']);\n";
                 } else {
-                    $method->addComment("@apiParam {$columnType} [{$column['Field']}] {$column['Comment']}");
+                    $method->addComment("@apiParam {{$columnType}} [{$column['Field']}] {$column['Comment']}");
                     $methodBody .= "\$bean->$setMethodName(\$param['{$column['Field']}']??'');\n";
                 }
             } else {
@@ -182,7 +182,7 @@ Body;
                 $columnType = $this->convertDbTypeToDocType($column['Type']);
                 $setMethodName = "set" . Str::studly($column['Field']);
                 $getMethodName = "get" . Str::studly($column['Field']);
-                $method->addComment("@apiParam {$columnType} [{$column['Field']}] {$column['Comment']}");
+                $method->addComment("@apiParam {{$columnType}} [{$column['Field']}] {$column['Comment']}");
                 $methodBody .= "\$updateBean->$setMethodName(\$param['{$column['Field']}']??\$bean->$getMethodName());\n";
             } else {
                 $this->config->setPrimaryKey($column['Field']);
