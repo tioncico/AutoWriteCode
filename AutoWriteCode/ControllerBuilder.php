@@ -269,8 +269,8 @@ Body;
         $methodBody = <<<Body
 \$db = {$mysqlPoolName}::defer();
 \$param = \$this->request()->getRequestParam();
-\$page = (int)\$param['page']??1;
-\$limit = (int)\$param['limit']??20;
+\$page = \$param['page']??1;
+\$limit = \$param['limit']??20;
 \$model = new {$modelName}(\$db);
 \$data = \$model->getAll(\$page, \$param['keyword']??null, \$limit);
 \$this->writeJson(Status::CODE_OK, \$data, 'success');
