@@ -82,8 +82,8 @@ require_once EASYSWOOLE_ROOT . '/EasySwooleEvent.php';
 go(function ()  {
     $automatic = new \AutoWriteCode\TableAutomatic('user_list', '');
     $controllerConfig = new \AutoWriteCode\Config\ControllerConfig();
-    $controllerConfig->setBaseDirectory( EASYSWOOLE_ROOT . '/' . $automatic::APP_PATH . '/Api');
-    $controllerConfig->setBaseNamespace($automatic->controllerNamespace);
+    $controllerConfig->setBaseDirectory( EASYSWOOLE_ROOT . '/' . $automatic::APP_PATH . '/HttpController/Api/');
+    $controllerConfig->setBaseNamespace("App\\HttpController\\Api");
     $controllerConfig->setTablePre($automatic->tablePre);
     $controllerConfig->setTableName($automatic->tableName);
     $controllerConfig->setTableComment($automatic->tableComment);
