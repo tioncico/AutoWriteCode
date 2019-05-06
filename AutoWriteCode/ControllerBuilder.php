@@ -273,7 +273,7 @@ Body;
 
 \$rs = \$model->delete(new $beanName(['{$this->config->getPrimaryKey()}' => \$param['{$this->config->getPrimaryKey()}']]));
 if (\$rs) {
-    \$this->writeJson(Status::CODE_OK, \$bean, "success");
+    \$this->writeJson(Status::CODE_OK, [], "success");
 } else {
     \$this->writeJson(Status::CODE_BAD_REQUEST, [], 'fail');
 }
