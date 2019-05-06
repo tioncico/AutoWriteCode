@@ -79,6 +79,7 @@ class ControllerBuilder
         $this->addUpdateDataMethod($phpClass);
         $this->addGetOneDataMethod($phpClass);
         $this->addGetAllDataMethod($phpClass);
+        $this->addDeleteDataMethod($phpClass);
 
 
         return $this->createPHPDocument($this->config->getBaseDirectory() . '/' . $realTableName, $phpNamespace, $this->config->getTableColumns());
@@ -89,6 +90,7 @@ class ControllerBuilder
         $addData = [];
         $method = $phpClass->addMethod('add');
         $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
+//        var_dump($this->config->getBaseNamespace(),$apiUrl);die;
         //配置基础注释
         $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/add");
         $method->addComment("@apiName add");
@@ -207,8 +209,8 @@ Body;
         $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
     }
 
-    function addGetOneDataMethod(ClassType $phpClass){
-        $addData = [];
+    function addGetOneDataMethod(ClassType $phpClass)
+    {
         $method = $phpClass->addMethod('getOne');
         $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
         //配置基础注释
@@ -246,8 +248,48 @@ Body;
         $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
     }
 
-    function addGetAllDataMethod(ClassType $phpClass){
-        $addData = [];
+    function addDeleteDataMethod(ClassType $phpClass)
+    {
+        $method = $phpClass->addMethod('delete');
+        $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
+        //配置基础注释
+        $method->addComment("@api {get|post} {$apiUrl}/{$this->setRealTableName()}/delete");
+        $method->addComment("@apiName delete");
+        $method->addComment("@apiGroup {$apiUrl}/{$this->setRealTableName()}");
+        $method->addComment("@apiPermission {$this->config->getAuthName()}");
+        $method->addComment("@apiDescription 根据主键删除一条信息");
+        $this->config->getAuthSessionName() && ($method->addComment("@apiParam {String}  {$this->config->getAuthSessionName()} 权限验证token"));
+        $method->addComment("@apiParam {int} {$this->config->getPrimaryKey()} 主键id");
+        $mysqlPoolNameArr = (explode('\\', $this->config->getMysqlPoolClass()));
+        $mysqlPoolName = end($mysqlPoolNameArr);
+        $modelNameArr = (explode('\\', $this->config->getModelClass()));
+        $modelName = end($modelNameArr);
+        $beanNameArr = (explode('\\', $this->config->getBeanClass()));
+        $beanName = end($beanNameArr);
+        $methodBody = <<<Body
+\$db = {$mysqlPoolName}::defer();
+\$param = \$this->request()->getRequestParam();
+\$model = new {$modelName}(\$db);
+
+\$rs = \$model->delete(new $beanName(['{$this->config->getPrimaryKey()}' => \$param['{$this->config->getPrimaryKey()}']]));
+if (\$rs) {
+    \$this->writeJson(Status::CODE_OK, \$bean, "success");
+} else {
+    \$this->writeJson(Status::CODE_BAD_REQUEST, [], 'fail');
+}
+Body;
+        $method->setBody($methodBody);
+        $method->addComment("@apiSuccess {Number} code");
+        $method->addComment("@apiSuccess {Object[]} data");
+        $method->addComment("@apiSuccess {String} msg");
+        $method->addComment("@apiSuccessExample {json} Success-Response:");
+        $method->addComment("HTTP/1.1 200 OK");
+        $method->addComment("{\"code\":200,\"data\":{},\"msg\":\"success\"}");
+        $method->addComment("@author: autoWriteCode < 1067197739@qq.com >");
+    }
+
+    function addGetAllDataMethod(ClassType $phpClass)
+    {
         $method = $phpClass->addMethod('getAll');
         $apiUrl = str_replace(['App\\HttpController', '\\'], ['', '/'], $this->config->getBaseNamespace());
         //配置基础注释
@@ -269,8 +311,8 @@ Body;
         $methodBody = <<<Body
 \$db = {$mysqlPoolName}::defer();
 \$param = \$this->request()->getRequestParam();
-\$page = \$param['page']??1;
-\$limit = \$param['limit']??20;
+\$page = (int)\$param['page']??1;
+\$limit = (int)\$param['limit']??20;
 \$model = new {$modelName}(\$db);
 \$data = \$model->getAll(\$page, \$param['keyword']??null, \$limit);
 \$this->writeJson(Status::CODE_OK, \$data, 'success');
